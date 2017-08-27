@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import gizeh
 from moviepy.editor import VideoClip
 
@@ -15,35 +17,35 @@ from moviepy.editor import VideoClip
 # clip.write_gif('circle.gif', fps=15, opt='OptimizePlus', fuzz=10)
 
 
-def render(shapes=None, frames=None, config=None):
-    # shapes: [{'type':'circle', 'args': { radius: 'var1', xy: ['var2',
-    # 'var3'], fill: [1,0,0}]}]
+def render(command_frames=None, config=None):
+    # command_frames: [[{'type':'circle', 'args': { radius: '5', xy: ['32',
+    # '33'], fill: [1,0,0] } }, ...commands], ...frames]
 
-    video_w, video_h = int(config['width']), int(config['height'])
+    video_w, video_h = config['width'], config['height']
+    bg = gizeh.rectangle(lx=video_w, ly=video_w, xy=(0, 0))
 
     def make_frame(t):
         surface = gizeh.Surface(video_w, video_h)
 
-        for shape_def in shapes:
+        bg.draw(surface)
+
+        num_frame = int(config['speed'] * t)
+        commands = command_frames[num_frame]
+        for command in commands:
+            # make strings non-unicode-flagged for easy access
             shape_args = {
-                arg: calc_shape_prop(arg, t)
-                for arg in shape_def['args']
+                str(key): val
+                for key, val in command['args'].items()
             }
-            shape_method = shape_def['type']
-            shape = gizeh[shape_method](**shape_args)
+            shape_method = command['type']
+
+            gizeh_fn = getattr(gizeh, shape_method)
+            shape = gizeh_fn(**shape_args)
             shape.draw(surface)
 
         return surface.get_npimage()
 
-    # frames: e.g. [[{ 'var1': 3.23, 'var2': '23423.33', 'var3': 323 }], ...]
-    def calc_shape_prop(prop_name, t):
-        if type(prop_name).__name__ == str.__name__:
-            return frames[t][prop_name]
-        else:  # if `prop_name` isn't a string, assume it's a constant value
-            #  and return it instead of getting a value from the frame
-            return prop_name
-
     video_duration = int(config['num_frames']) / float(config['speed'])
     video = VideoClip(make_frame=make_frame, duration=video_duration)
-    video.set_fps(float(config['speed']))
+    video.fps = config['speed']
     return video

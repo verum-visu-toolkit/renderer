@@ -12,5 +12,8 @@ setup(
     install_requires=[
         'gizeh==0.1.10',
         'moviepy==0.2.3.2'
-    ]
+    ],
+    entry_points={
+        'console_scripts': ['vv-renderer = vvrenderer.__main__:main']
+    }
 )
