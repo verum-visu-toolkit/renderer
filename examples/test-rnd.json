@@ -7,6 +7,15 @@
   },
   "data": [
     [{
+      "type": "text",
+      "args": {
+        "txt": "Hello World",
+        "fontfamily": "Impact",
+        "fontsize": 70,
+        "xy": [250, 50]
+      },
+      "name": "demoLabel"
+    }, {
       "type": "circle",
       "args": {
         "fill": [1, 0, 0],
@@ -29,6 +38,8 @@
         "r": 80,
         "xy": [300, 250]
       }
+    }, {
+      "hide": "demoLabel"
     }],
     [{
       "type": "circle",

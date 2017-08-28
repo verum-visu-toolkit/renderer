@@ -21,7 +21,7 @@ from renderer import render
 #   config: {width: Number, height: Number, num_frames: Number, speed: Number}
 #   data: [frame, ...]
 #       frame: [command, ...]
-#           command: {type: String, args}
+#           command: {type: String, args, name?: String} | {"hide": name}
 #               args: {param_name: param_val, ...}
 
 
@@ -44,8 +44,7 @@ def main():
             'num_frames': int(rnd_file_config['num_frames']),
             'speed': float(rnd_file_config['speed'])
         }
-        video = render(command_frames=rnd_file_data['data'],
-                       config=config)
+        video = render(command_frames=rnd_file_data['data'], config=config)
         video.write_videofile(input_args['-o'])
 
 
