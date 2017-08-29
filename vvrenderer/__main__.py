@@ -2,13 +2,14 @@
 """Verum Visu Toolkit: Renderer.
 
 Usage:
-  vv-renderer --rnd=<renderpath> -o <destpath>
+  vv-renderer --rnd=<renderpath> [--audio=<audiosrcpath>] -o <destpath>
 
 Options:
-  -h --help           Show this screen.
-  --version           Show version.
-  --rnd=<renderpath>  Path to a JSON file with Director output data
-  -o <destpath>       Path to write output mp4 file
+  -h --help               Show this screen.
+  --version               Show version.
+  --rnd=<renderpath>      Path to a JSON file with Director output data
+  --audio=<audiosrcpath>  Path to an audio file to composite to the output
+  -o <destpath>           Path to write output mp4 file (should end in .mp4)
 """
 
 from docopt import docopt
@@ -44,7 +45,8 @@ def main():
             'num_frames': int(rnd_file_config['num_frames']),
             'speed': float(rnd_file_config['speed'])
         }
-        video = render(command_frames=rnd_file_data['data'], config=config)
+        video = render(command_frames=rnd_file_data['data'], config=config,
+                       audio_srcpath=input_args['--audio'])
         video.write_videofile(input_args['-o'])
 
 

@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import gizeh
-from moviepy.editor import VideoClip
+from moviepy.editor import VideoClip, AudioFileClip
 
 # W,H = 128,128  # width, height, in pixels
 # duration = 2  # duration of the clip, in seconds
@@ -17,21 +17,16 @@ from moviepy.editor import VideoClip
 # clip.write_gif('circle.gif', fps=15, opt='OptimizePlus', fuzz=10)
 
 
-def render(command_frames=None, config=None):
+def render(command_frames=None, config=None, audio_srcpath=None):
     # command_frames: [[{'type':'circle', 'args': { radius: '5', xy: ['32',
     # '33'], fill: [1,0,0] } }, ...commands], ...frames]
 
     video_w, video_h = config['width'], config['height']
-    bg = gizeh.rectangle(lx=video_w, ly=video_h,
-                         xy=(video_w / 2, video_h / 2),
-                         fill=(1, 1, 1))
 
     named_shapes = dict()
 
     def make_frame(t):
-        surface = gizeh.Surface(video_w, video_h)
-
-        bg.draw(surface)
+        surface = gizeh.Surface(video_w, video_h, bg_color=(1, 1, 1))
 
         # draw all shapes in named_shapes (they are removed when hidden via
         # hide command)
@@ -68,4 +63,8 @@ def render(command_frames=None, config=None):
     video_duration = int(config['num_frames']) / float(config['speed'])
     video = VideoClip(make_frame=make_frame, duration=video_duration)
     video.fps = config['speed']
+
+    if audio_srcpath is not None:
+        video.audio = AudioFileClip(audio_srcpath)
+
     return video
