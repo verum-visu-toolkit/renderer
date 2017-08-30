@@ -2,13 +2,17 @@
 """Verum Visu Toolkit: Renderer.
 
 Usage:
-  vv-renderer --rnd=<renderpath> [--audio=<audiosrcpath>] -o <destpath>
+  vv-renderer --rnd=<renderpath> -o <destpath>
+              [--audio=<audiosrcpath>]
+              [--duration=<seconds>]
+
 
 Options:
   -h --help               Show this screen.
   --version               Show version.
   --rnd=<renderpath>      Path to a JSON file with Director output data
   --audio=<audiosrcpath>  Path to an audio file to composite to the output
+  --duration=<seconds>    Optional, specify duration of video
   -o <destpath>           Path to write output mp4 file (should end in .mp4)
 """
 
@@ -45,8 +49,10 @@ def main():
             'num_frames': int(rnd_file_config['num_frames']),
             'speed': float(rnd_file_config['speed'])
         }
+        duration = input_args['--duration']
+
         video = render(command_frames=rnd_file_data['data'], config=config,
-                       audio_srcpath=input_args['--audio'])
+                       audio_srcpath=input_args['--audio'], duration=duration)
         video.write_videofile(input_args['-o'])
 
 

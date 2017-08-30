@@ -17,7 +17,8 @@ from moviepy.editor import VideoClip, AudioFileClip
 # clip.write_gif('circle.gif', fps=15, opt='OptimizePlus', fuzz=10)
 
 
-def render(command_frames=None, config=None, audio_srcpath=None):
+def render(command_frames=None, config=None, audio_srcpath=None,
+           duration=None):
     # command_frames: [[{'type':'circle', 'args': { radius: '5', xy: ['32',
     # '33'], fill: [1,0,0] } }, ...commands], ...frames]
 
@@ -34,7 +35,11 @@ def render(command_frames=None, config=None, audio_srcpath=None):
             shape.draw(surface)
 
         num_frame = int(config['speed'] * t)
-        commands = command_frames[num_frame]
+        try:
+            commands = command_frames[num_frame]
+        except IndexError as e:
+            return surface.get_npimage()
+
         for command in commands:
             # if there is a hide key, this command is a hide command
             if 'hide' in command:
@@ -60,8 +65,11 @@ def render(command_frames=None, config=None, audio_srcpath=None):
 
         return surface.get_npimage()
 
-    video_duration = int(config['num_frames']) / float(config['speed'])
-    video = VideoClip(make_frame=make_frame, duration=video_duration)
+    if duration is None:
+        duration = int(config['num_frames']) / float(config['speed'])
+    else:
+        duration = int(duration)
+    video = VideoClip(make_frame=make_frame, duration=duration)
     video.fps = config['speed']
 
     if audio_srcpath is not None:
