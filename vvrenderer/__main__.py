@@ -2,7 +2,7 @@
 """Verum Visu Toolkit: Renderer.
 
 Usage:
-  vv-renderer --rnd=<renderpath> -o <destpath>
+  vv-renderer --rnd=<renderpath> [--json] -o <destpath>
               [--audio=<audiosrcpath>]
               [--duration=<seconds>]
 
@@ -10,7 +10,8 @@ Usage:
 Options:
   -h --help               Show this screen.
   --version               Show version.
-  --rnd=<renderpath>      Path to a JSON file with Director output data
+  --rnd=<renderpath>      Path to a file with Director output data
+  --json                  Specifies that the file contains uncompressed JSON
   --audio=<audiosrcpath>  Path to an audio file to composite to the output
   --duration=<seconds>    Optional, specify duration of video
   -o <destpath>           Path to write output mp4 file (should end in .mp4)
@@ -18,8 +19,8 @@ Options:
 
 from docopt import docopt
 import pkg_resources
-import json
-from renderer import render
+from vvbasicfile import RndFormat
+from __init__ import render
 
 # rnd JSON file format:
 # {config, data}
@@ -34,26 +35,29 @@ def main():
     version = pkg_resources.require('vvrenderer')[0]
     input_args = docopt(__doc__, version=version)
 
+    output_path = input_args['-o']
+
     # test that the dest path is writeable
-    with open(input_args['-o'], 'w'):
+    with open(output_path, 'w'):
         pass
 
-    with open(input_args['--rnd']) as rnd_file:
-        rnd_file_data = json.load(rnd_file)
-        # impl binary format for rnd files later... json.load => fndfile.load
+    rnd_filename = input_args['--rnd']
+    rndfile = RndFormat.load_from_json_file(rnd_filename) \
+        if input_args['--json'] else RndFormat.load_from_file(rnd_filename)
 
-        rnd_file_config = rnd_file_data['config']
-        config = {
-            'width': int(rnd_file_config['width']),
-            'height': int(rnd_file_config['height']),
-            'num_frames': int(rnd_file_config['num_frames']),
-            'speed': float(rnd_file_config['speed'])
-        }
-        duration = input_args['--duration']
+    rnd_file_config = rndfile.get_config()
 
-        video = render(command_frames=rnd_file_data['data'], config=config,
-                       audio_srcpath=input_args['--audio'], duration=duration)
-        video.write_videofile(input_args['-o'])
+    render_config = {
+        'width': int(rnd_file_config['width']),
+        'height': int(rnd_file_config['height']),
+        'num_frames': int(rnd_file_config['num_frames']),
+        'speed': float(rnd_file_config['speed'])
+    }
+    duration = input_args['--duration']
+
+    video = render(command_frames=rndfile.data(), config=render_config,
+                   audio_srcpath=input_args['--audio'], duration=duration)
+    video.write_videofile(output_path)
 
 
 if __name__ == '__main__':
