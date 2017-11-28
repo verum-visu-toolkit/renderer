@@ -55,7 +55,7 @@ def main():
     }
     duration = input_args['--duration']
 
-    video = render(command_frames=rndfile.data(), config=render_config,
+    video = render(command_frames=rndfile.data, config=render_config,
                    audio_srcpath=input_args['--audio'], duration=duration)
     video.write_videofile(output_path)
 
