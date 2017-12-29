@@ -1,28 +1,29 @@
 from __future__ import print_function
 
+import utils
 import gizeh
 from moviepy.editor import VideoClip, AudioFileClip
 
-# W,H = 128,128  # width, height, in pixels
-# duration = 2  # duration of the clip, in seconds
-
-# def make_frame(t):
-#     surface = gizeh.Surface(W,H)
-#     radius = W * (1 + (t*(duration-t))**2) / 6
-#     circle = gizeh.circle(radius, xy=(W/2, H/2), fill=(1, 0, 0))
-#     circle.draw(surface)
-#     return surface.get_npimage()
-#
-# clip = mpy.VideoClip(make_frame, duration=duration)
-# clip.write_gif('circle.gif', fps=15, opt='OptimizePlus', fuzz=10)
+# TODO: figure out why make_frame is taking so long...
+# (it's doing about ~3 frames/second rendering the 100 bars, 30fps multi spectra video!)
 
 
-def render(command_frames=None, config=None, audio_srcpath=None,
-           duration=None):
+def render(command_frames, config=None, audio_srcpath=None, duration=None):
     # command_frames: [[{'type':'circle', 'args': { radius: '5', xy: ['32',
     # '33'], fill: [1,0,0] } }, ...commands], ...frames]
 
+    if (hasattr(command_frames, 'next')
+            and callable(getattr(command_frames, 'next', None))) or\
+        (hasattr(command_frames, '__next__')
+            and callable(getattr(command_frames, '__next__', None))):
+        frame_is_gen = True
+    elif type(command_frames) is list:
+        frame_is_gen = False
+    else:
+        raise TypeError('command_frames must be a list or have __next__ function')
+
     video_w, video_h = config['width'], config['height']
+    video_fps = config['speed']
 
     named_shapes = dict()
 
@@ -34,11 +35,15 @@ def render(command_frames=None, config=None, audio_srcpath=None,
         for _, shape in named_shapes.items():
             shape.draw(surface)
 
-        num_frame = int(config['speed'] * t)
+        commands = []
         try:
-            commands = command_frames[num_frame]
-        except IndexError as e:
-            return surface.get_npimage()
+            if frame_is_gen:
+                commands = next(command_frames)  # each video frame is 1-to-1 with a rnd frame
+            else:
+                num_frame = int(video_fps * t)
+                commands = command_frames[num_frame]
+        except (StopIteration, IndexError):
+            pass
 
         for command in commands:
             # if there is a hide key, this command is a hide command
@@ -50,7 +55,7 @@ def render(command_frames=None, config=None, audio_srcpath=None,
             else:
                 # make args keys non-unicode-flagged strings for easy access
                 shape_args = {
-                    str(key): val
+                    str(key): utils.simplify_type_for_gizeh(val)
                     for key, val in command['args'].items()
                 }
                 shape_method = command['type']
@@ -69,8 +74,9 @@ def render(command_frames=None, config=None, audio_srcpath=None,
         duration = int(config['num_frames']) / float(config['speed'])
     else:
         duration = int(duration)
+
     video = VideoClip(make_frame=make_frame, duration=duration)
-    video.fps = config['speed']
+    video.fps = video_fps
 
     if audio_srcpath is not None:
         video.audio = AudioFileClip(audio_srcpath)
